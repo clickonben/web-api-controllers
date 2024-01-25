@@ -1,49 +1,83 @@
-from enums import HTTPMethods
-from fastapi import FastAPI
+from typing import List
+from di import DIContainer
+from fastapi import FastAPI, Response
+from fastapi.routing import APIRoute, BaseRoute
+from routing import Registry
+from fastapi.middleware.cors import CORSMiddleware
 
 
 class BaseController:
-    routes = {}
+    routes = []
 
     def __init__(self,
-                 app: FastAPI
+                 app: FastAPI,
+                 cors_origins=None,
                  ) -> None:
-        self.app = app
+        self.__app = app
+        if cors_origins is None:
+            cors_origins = ['*']
+        self.__add_cors(cors_origins)
+        self.__register_routes()
 
-    def _get_route_id(self):
-        """Subclasses should override this method to return a unique identifier."""
-        raise NotImplementedError("Subclasses must implement get_route_id method")
+    def __register_routes(self) -> None:
+        container = DIContainer(Registry())
+        registry = container.get(Registry)
+        self.__routes = registry.get_routes()
+        for func, path, method in self.__routes:
+            bound_method = getattr(self, func.__name__)
+            self.__add_route(bound_method, method, path)
 
-    def __register_routes(self):
-        route_id = self._get_route_id()
-        for (route_id, method), funcs in self.routes.get(route_id, []):
-            for func, path in funcs:
-                def route_handler(func=func, self=self, **kwargs):
-                    return func(self, **kwargs)
-                self.app.add_api_route(
-                    path=f"/{route_id}{path}",
-                    endpoint=route_handler,
-                    methods=[method.value]
-                )
+        self.__add_options_endpoints()
 
-    @classmethod
-    def get(
-            cls,
-            route_id: str = None,
-            path: str = ""
-    ) -> callable:
-        return cls.create_decorator(HTTPMethods.GET, route_id, path)
+    def __add_route(self, bound_method, method, path):
+        self.__app.add_api_route(
+            path=path,
+            endpoint=bound_method,
+            methods=[method.value]
+        )
+        if method.value == 'GET':
+            self.__add_head(path)
 
-    @classmethod
-    def create_decorator(cls,
-                         method: HTTPMethods,
-                         route_id: str = None,
-                         path: str = ""
-                         ) -> callable:
-        def decorator(func):
-            if route_id not in cls.routes:
-                cls.routes[route_id] = []
-            cls.routes[(route_id, method)].append((func, path))
-            return func
+    def __add_head(self, path):
+        self.__app.add_api_route(
+            path=path,
+            endpoint=self.__head_handler,
+            methods=['HEAD']
+        )
 
-        return decorator
+    def __add_cors(self, cors_origins):
+        # noinspection PyTypeChecker
+        self.__app.add_middleware(
+            CORSMiddleware,
+            allow_origins=cors_origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
+    def __add_options_endpoints(self):
+        current_routes = self.__app.routes.copy()
+        for route in current_routes:
+            if isinstance(route, APIRoute):
+                self.__add_options_route(route, current_routes)
+
+    def __add_options_route(self, route: APIRoute, current_routes: List[BaseRoute]):
+        methods = self.__get_methods_for_route(route, current_routes)
+        # noinspection PyTypeChecker
+        self.__app.add_api_route(
+            path=route.path,
+            endpoint=lambda: {"allowed_methods": methods},
+            methods=["OPTIONS"],
+        )
+
+    @staticmethod
+    def __get_methods_for_route(route: APIRoute, current_routes) -> List[str]:
+        methods = set()
+        for r in current_routes:
+            if isinstance(r, APIRoute) and r.path == route.path:
+                methods.update(r.methods)
+        return list(methods)
+
+    @staticmethod
+    async def __head_handler() -> Response:
+        return Response()

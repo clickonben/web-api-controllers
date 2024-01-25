@@ -1,25 +1,50 @@
 from fastapi import FastAPI
-
+from routing import Get, Post, Put, Delete, Patch
 from controllers import BaseController
 
 
 class TestController(BaseController):
-    route_id = 'test'
 
     def __init__(self, app: FastAPI) -> None:
         super().__init__(app)
 
-    @BaseController.get(route_id, '/')
-    async def index(self) -> str:
-        return 'Hello World!'
+    @Get('/')
+    async def get(self) -> dict:
+        return {"method": "GET", "path": "/"}
 
-    @BaseController.get(route_id, '/test')
-    async def test(self) -> str:
-        return 'This is a test!'
+    @Get('/{arg}')
+    async def get_with_arg(self, arg) -> dict:
+        return {"method": "GET", "path": "/", "arg": arg}
 
-    @BaseController.get(route_id, '/test2')
-    async def test2(self) -> str:
-        return 'This is another test!'
+    @Post('/')
+    async def post(self) -> dict:
+        return {"method": "POST", "path": "/"}
 
-    def _get_route_id(self) -> str:
-        return self.route_id
+    @Post('/{arg}')
+    async def post_with_arg(self, arg) -> dict:
+        return {"method": "POST", "path": "/", "arg": arg}
+
+    @Put('/')
+    async def put(self) -> dict:
+        return {"method": "PUT", "path": "/"}
+
+    @Put('/{arg}')
+    async def put_with_arg(self, arg) -> dict:
+        return {"method": "PUT", "path": "/", "arg": arg}
+
+    @Delete('/')
+    async def delete(self) -> dict:
+        return {"method": "DELETE", "path": "/"}
+
+    @Delete('/{arg}')
+    async def delete_with_arg(self, arg) -> dict:
+        return {"method": "DELETE", "path": "/", "arg": arg}
+
+    @Patch('/')
+    async def patch(self) -> dict:
+        return {"method": "PATCH", "path": "/"}
+
+    @Patch('/{arg}')
+    async def patch_with_arg(self, arg) -> dict:
+        return {"method": "PATCH", "path": "/", "arg": arg}
+
