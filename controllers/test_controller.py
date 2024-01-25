@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from routing import Get, Post, Put, Delete, Patch
-from controllers import BaseController
+from controllers import APIController
 
 
-class TestController(BaseController):
+class TestController(APIController):
 
     def __init__(self, app: FastAPI) -> None:
         super().__init__(app)

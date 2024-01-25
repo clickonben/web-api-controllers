@@ -6,7 +6,7 @@ from routing import Registry
 from fastapi.middleware.cors import CORSMiddleware
 
 
-class BaseController:
+class APIController:
     routes = []
 
     def __init__(self,

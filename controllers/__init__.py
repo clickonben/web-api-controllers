@@ -1,2 +1,2 @@
-from controllers.base_controller import BaseController
+from controllers.api_controller import APIController
 from controllers.test_controller import TestController
