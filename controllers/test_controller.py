@@ -47,4 +47,3 @@ class TestController(APIController):
     @Patch('/{arg}')
     async def patch_with_arg(self, arg) -> dict:
         return {"method": "PATCH", "path": "/", "arg": arg}
-
