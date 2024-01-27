@@ -1,4 +1,4 @@
-# FastAPI Controllers
+# WebAPI Controllers
 
 ## Description
 API controller framework for FastAPI
@@ -31,3 +31,5 @@ class TestController(APIController):
 app = FastAPI()
 test_controller = TestController(app)
 ```
+## Caution
+This project is in a very early state so far, doesn't do much and might not be very useful to anyone yet. There is no support avilable, use at your own risk

@@ -1,8 +1,8 @@
 from typing import List
-from di import DIContainer
+from ..di import DIContainer
+from ..routing import Registry
 from fastapi import FastAPI, Response
 from fastapi.routing import APIRoute, BaseRoute
-from routing import Registry
 from fastapi.middleware.cors import CORSMiddleware
 
 

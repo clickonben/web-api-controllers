@@ -1,5 +1,5 @@
-from routing import Route
-from enums import HTTPMethods
+from route import Route
+from ..enums import HTTPMethods
 
 
 class Get(Route):

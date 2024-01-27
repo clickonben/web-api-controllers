@@ -1,7 +1,7 @@
-from di import DIContainer
-from enums import HTTPMethods
+from ..di import DIContainer
+from ..enums import HTTPMethods
 from typing import Callable
-from routing import Registry
+from ..routing import Registry
 
 
 class Route:
