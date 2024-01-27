@@ -18,7 +18,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/codingflowdev/fast-api-controllers"
+Homepage = "https://github.com/codingflowdev/web-api-controllers"
 
 [tool.hatch.build.targets.wheel]
 # Exclude app.py from the wheel distribution

@@ -1,7 +1,7 @@
-# WebAPI Controllers
+# Web API Controllers
 
 ## Description
-API controller framework for FastAPI
+Simple Web API controller framework for FastAPI
 
 ## Example
 ```python
