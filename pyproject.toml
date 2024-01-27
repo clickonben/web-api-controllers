@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "webapicontrollers"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
   { name="Ben Robinson" },
 ]
@@ -19,3 +19,11 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/codingflowdev/fast-api-controllers"
+
+[tool.hatch.build.targets.wheel]
+# Exclude app.py from the wheel distribution
+exclude = ["src/app.py"]
+
+[tool.hatch.build.targets.sdist]
+# Exclude app.py from the source distribution
+exclude = ["src/app.py"]
