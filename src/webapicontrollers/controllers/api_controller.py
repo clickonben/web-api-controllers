@@ -10,13 +10,14 @@ class APIController:
     routes = []
 
     def __init__(self,
-                 app: FastAPI,
+                 app: FastAPI = None,
                  cors_origins=None,
                  ) -> None:
+        if app is None:
+            app = FastAPI()
         self.__app = app
-        if cors_origins is None:
-            cors_origins = ['*']
-        self.__add_cors(cors_origins)
+        if cors_origins is not None:
+            self.__add_cors(cors_origins)
         self.__register_routes()
 
     def __register_routes(self) -> None:

@@ -1,12 +1,6 @@
-# WebAPI Controllers
-
-## Description
-API controller framework for FastAPI
-
-## Example
-```python
 from fastapi import FastAPI
-from webapicontrollers import APIController, Get, Post
+from src.webapicontrollers import APIController, Get, Post
+
 
 class TestController(APIController):
 
@@ -29,8 +23,6 @@ class TestController(APIController):
     async def post_with_arg(self, arg) -> dict:
         return {"method": "POST", "path": "/", "arg": arg}
 
+
 app = FastAPI()
 test_controller = TestController(app)
-```
-## Caution
-This project is in a very early state so far, doesn't do much and might not be very useful to anyone yet. There is no support avilable, use at your own risk
