@@ -1,8 +1,8 @@
 from fastapi import FastAPI
-from src.webapicontrollers import APIController, Get, Post, RoutePrefix
+from src.webapicontrollers import APIController, Get, Post, Patch, Delete, Put, RoutePrefix
 
 
-#@RoutePrefix('/test')
+@RoutePrefix('/test')
 class TestController(APIController):
 
     def __init__(self, app: FastAPI) -> None:
@@ -23,6 +23,30 @@ class TestController(APIController):
     @Post('/{arg}')
     async def post_with_arg(self, arg) -> dict:
         return {"method": "POST", "path": "/", "arg": arg}
+    
+    @Put('/')
+    async def put(self) -> dict:
+        return {"method": "PUT", "path": "/"}
+    
+    @Put('/{arg}')
+    async def put_with_arg(self, arg) -> dict:
+        return {"method": "PUT", "path": "/", "arg": arg}
+    
+    @Patch('/')
+    async def patch(self) -> dict:
+        return {"method": "PATCH", "path": "/"}
+    
+    @Patch('/{arg}')
+    async def patch_with_arg(self, arg) -> dict:
+        return {"method": "PATCH", "path": "/", "arg": arg}
+    
+    @Delete('/')
+    async def delete(self) -> dict:
+        return {"method": "DELETE", "path": "/"}
+    
+    @Delete('/{arg}')
+    async def delete_with_arg(self, arg) -> dict:
+        return {"method": "DELETE", "path": "/", "arg": arg}
 
 
 app = FastAPI()
