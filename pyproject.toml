@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "webapicontrollers"
 version = "0.0.4"
 authors = [
-  { name="Ben Robinson" },
+  { name="Coding Flow" },
 ]
 description = "A basic API controller framework built on top of FastAPI"
 readme = "README.md"
