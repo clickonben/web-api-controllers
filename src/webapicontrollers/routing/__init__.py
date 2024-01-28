@@ -5,3 +5,6 @@ from .post import Post
 from .put import Put
 from .delete import Delete
 from .patch import Patch
+from .head import Head
+from .options import Options
+from .route_prefix import RoutePrefix

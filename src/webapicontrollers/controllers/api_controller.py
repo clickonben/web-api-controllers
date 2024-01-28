@@ -10,25 +10,32 @@ class APIController:
     routes = []
 
     def __init__(self,
-                 app: FastAPI = None,
+                 app: FastAPI,
                  cors_origins=None,
+                 generate_options_endpoints=True,
+                 generate_head_endpoints=True
                  ) -> None:
-        if app is None:
-            app = FastAPI()
-        self.__app = app
+        self.__app = app        
+        self.__generate_options_endpoints = generate_options_endpoints
+        self.__generate_head_endpoints = generate_head_endpoints        
         if cors_origins is not None:
             self.__add_cors(cors_origins)
+
         self.__register_routes()
 
     def __register_routes(self) -> None:
         container = DIContainer(Registry())
         registry = container.get(Registry)
-        self.__routes = registry.get_routes()
+        self.__routes = registry.get_routes()        
+
         for func, path, method in self.__routes:
-            bound_method = getattr(self, func.__name__)
+            if hasattr(self,'_route_prefix'):
+                path = self._route_prefix + path
+            bound_method = getattr(self, func.__name__)            
             self.__add_route(bound_method, method, path)
 
-        self.__add_options_endpoints()
+        if self.__generate_options_endpoints:
+            self.__add_options_endpoints()
 
     def __add_route(self, bound_method, method, path):
         self.__app.add_api_route(
@@ -36,7 +43,7 @@ class APIController:
             endpoint=bound_method,
             methods=[method.value]
         )
-        if method.value == 'GET':
+        if method.value == 'GET' and self.__generate_head_endpoints:
             self.__add_head(path)
 
     def __add_head(self, path):

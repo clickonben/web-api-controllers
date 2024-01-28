@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from src.webapicontrollers import APIController, Get, Post
+from src.webapicontrollers import APIController, Get, Post, RoutePrefix
 
 
+#@RoutePrefix('/test')
 class TestController(APIController):
 
     def __init__(self, app: FastAPI) -> None:
