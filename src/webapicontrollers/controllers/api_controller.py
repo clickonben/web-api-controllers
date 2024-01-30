@@ -26,13 +26,15 @@ class APIController:
     def __register_routes(self) -> None:
         container = DIContainer(Registry())
         registry = container.get(Registry)
-        self.__routes = registry.get_routes()        
+        self.__routes = registry.get_routes()
 
         for func, path, method in self.__routes:
             if hasattr(self,'_route_prefix'):
                 path = self._route_prefix + path
-            bound_method = getattr(self, func.__name__)            
-            self.__add_route(bound_method, method, path)
+                
+            if hasattr(self, func.__name__) and callable(getattr(self, func.__name__)):
+                bound_method = getattr(self, func.__name__)            
+                self.__add_route(bound_method, method, path)
 
         if self.__generate_options_endpoints:
             self.__add_options_endpoints()
