@@ -1,4 +1,6 @@
 from typing import List
+
+from fastapi.responses import JSONResponse
 from ..di import DIContainer
 from ..routing import Registry
 from fastapi import FastAPI, Response
@@ -11,9 +13,9 @@ class APIController:
 
     def __init__(self,
                  app: FastAPI,
-                 cors_origins=None,
-                 generate_options_endpoints=True,
-                 generate_head_endpoints=True
+                 cors_origins: List[str]=None,
+                 generate_options_endpoints: bool=True,
+                 generate_head_endpoints: bool=True
                  ) -> None:
         self.__app = app        
         self.__generate_options_endpoints = generate_options_endpoints
@@ -39,7 +41,7 @@ class APIController:
         if self.__generate_options_endpoints:
             self.__add_options_endpoints()
 
-    def __add_route(self, bound_method, method, path):
+    def __add_route(self, bound_method, method, path) -> None:
         self.__app.add_api_route(
             path=path,
             endpoint=bound_method,
@@ -48,14 +50,14 @@ class APIController:
         if method.value == 'GET' and self.__generate_head_endpoints:
             self.__add_head(path)
 
-    def __add_head(self, path):
+    def __add_head(self, path) -> None:
         self.__app.add_api_route(
             path=path,
             endpoint=self.__head_handler,
             methods=['HEAD']
         )
 
-    def __add_cors(self, cors_origins):
+    def __add_cors(self, cors_origins) -> None:
         # noinspection PyTypeChecker
         self.__app.add_middleware(
             CORSMiddleware,
@@ -65,13 +67,13 @@ class APIController:
             allow_headers=["*"],
         )
 
-    def __add_options_endpoints(self):
+    def __add_options_endpoints(self) -> None:
         current_routes = self.__app.routes.copy()
         for route in current_routes:
             if isinstance(route, APIRoute):
                 self.__add_options_route(route, current_routes)
 
-    def __add_options_route(self, route: APIRoute, current_routes: List[BaseRoute]):
+    def __add_options_route(self, route: APIRoute, current_routes: List[BaseRoute]) -> None:
         methods = self.__get_methods_for_route(route, current_routes)
         # noinspection PyTypeChecker
         self.__app.add_api_route(
@@ -79,6 +81,24 @@ class APIController:
             endpoint=lambda: {"allowed_methods": methods},
             methods=["OPTIONS"],
         )
+
+    def not_found(self, path: str) -> JSONResponse:
+        return JSONResponse(status_code=404, content={"message": f"Path {path} not found"})
+    
+    def method_not_allowed(self, path: str, method: str) -> JSONResponse:
+        return JSONResponse(status_code=405, content={"message": f"Method {method} not allowed for path {path}"})
+    
+    def server_error(self, path: str, method: str, error: str) -> JSONResponse:
+        return JSONResponse(status_code=500, content={"message": f"Error {error} for method {method} and path {path}"})
+    
+    def bad_request(self, path: str, method: str, error: str) -> JSONResponse:
+        return JSONResponse(status_code=400, content={"message": f"Error {error} for method {method} and path {path}"})
+    
+    def not_authorized(self, path: str, method: str, error: str) -> JSONResponse:
+        return JSONResponse(status_code=401, content={"message": f"Error {error} for method {method} and path {path}"})
+    
+    def forbidden(self, path: str, method: str, error: str) -> JSONResponse:
+        return JSONResponse(status_code=403, content={"message": f"Error {error} for method {method} and path {path}"})
 
     @staticmethod
     def __get_methods_for_route(route: APIRoute, current_routes) -> List[str]:
