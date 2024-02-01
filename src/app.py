@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from src.webapicontrollers import APIController, Get, Post, Patch, Delete, Put, RoutePrefix
 
 
@@ -15,28 +16,28 @@ class TestController(APIController):
         
     
     @Get('/400')
-    async def get_bad_request(self, request: Request) -> dict:
-        return self.bad_request(request)
+    async def get_bad_request(self) -> dict:
+        raise HTTPException(status_code=400, detail="Bad Request")
     
     @Get('/401')
-    async def get_not_authorized(self, request: Request) -> dict:
-        return self.not_authorized(request)
+    async def get_not_authorized(self) -> dict:
+        raise HTTPException(status_code=401, detail="Not Authorized")
     
     @Get('/403')
-    async def get_forbidden(self, request: Request) -> dict:
-        return self.forbidden(request)
+    async def get_forbidden(self) -> dict:
+        raise HTTPException(status_code=403, detail="Forbidden")
     
     @Get('/404')
-    async def get_not_found(self, request: Request) -> dict:
-        return self.not_found(request)
+    async def get_not_found(self) -> dict:
+        raise HTTPException(status_code=404, detail="Not Found")
     
     @Get('/405')
-    async def get_method_not_allowed(self, request: Request) -> dict:
-        return self.method_not_allowed(request)
+    async def get_method_not_allowed(self) -> dict:
+        raise HTTPException(status_code=405, detail="Method Not Allowed")
     
     @Get('/500')
-    async def get_internal_server_error(self, request: Request) -> dict:
-        return self.internal_server_error(request)
+    async def get_internal_server_error(self) -> dict:
+        raise HTTPException(status_code=500, detail="Internal Server Error")
     
     @Get('/{arg}')
     async def get_with_arg(self, arg) -> dict:
@@ -73,6 +74,30 @@ class TestController(APIController):
     @Delete('/{arg}')
     async def delete_with_arg(self, arg) -> dict:
         return {"method": "DELETE", "path": "/", "arg": arg}
+    
+    def bad_request(self, request: Request, exc: HTTPException) -> JSONResponse:
+        # Custom handling code
+        return super().bad_request(request, exc)
+    
+    def not_authorized(self, request: Request, exc: HTTPException) -> JSONResponse:
+        # Custom handling code
+        return super().not_authorized(request, exc)
+    
+    def forbidden(self, request: Request, exc: HTTPException) -> JSONResponse:
+        # Custom handling code
+        return super().forbidden(request, exc)
+    
+    def not_found(self, request: Request, exc: HTTPException) -> JSONResponse:
+        # Custom handling code
+        return super().not_found(request, exc)
+    
+    def method_not_allowed(self, request: Request, exc: HTTPException) -> JSONResponse:
+        # Custom handling code
+        return super().method_not_allowed(request, exc)
+    
+    def internal_server_error(self, request: Request, exc: HTTPException) -> JSONResponse:
+        # Custom handling code
+        return super().internal_server_error(request, exc)
 
 
 app = FastAPI()

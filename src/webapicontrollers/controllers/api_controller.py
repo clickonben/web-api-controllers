@@ -1,9 +1,9 @@
+from enum import Enum
 from typing import List
-
 from fastapi.responses import JSONResponse
 from ..di import DIContainer
 from ..routing import Registry
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.routing import APIRoute, BaseRoute
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -15,11 +15,13 @@ class APIController:
                  app: FastAPI,
                  cors_origins: List[str]=None,
                  generate_options_endpoints: bool=True,
-                 generate_head_endpoints: bool=True
+                 generate_head_endpoints: bool=True,
+                 debug_mode: bool=False
                  ) -> None:
         self.__app = app        
         self.__generate_options_endpoints = generate_options_endpoints
-        self.__generate_head_endpoints = generate_head_endpoints        
+        self.__generate_head_endpoints = generate_head_endpoints   
+        self.__debug_mode = debug_mode     
         if cors_origins is not None:
             self.__add_cors(cors_origins)
 
@@ -41,7 +43,9 @@ class APIController:
         if self.__generate_options_endpoints:
             self.__add_options_endpoints()
 
-    def __add_route(self, bound_method, method, path) -> None:
+        self.__add_exception_handlers()
+
+    def __add_route(self, bound_method: callable, method: Enum, path: str) -> None:
         self.__app.add_api_route(
             path=path,
             endpoint=bound_method,
@@ -50,14 +54,14 @@ class APIController:
         if method.value == 'GET' and self.__generate_head_endpoints:
             self.__add_head(path)
 
-    def __add_head(self, path) -> None:
+    def __add_head(self, path: str) -> None:
         self.__app.add_api_route(
             path=path,
             endpoint=self.__head_handler,
             methods=['HEAD']
         )
 
-    def __add_cors(self, cors_origins) -> None:
+    def __add_cors(self, cors_origins: List[str]) -> None:
         # noinspection PyTypeChecker
         self.__app.add_middleware(
             CORSMiddleware,
@@ -82,37 +86,63 @@ class APIController:
             methods=["OPTIONS"],
         )
 
-    def bad_request(self,  request: Request, error: str = "Bad Request") -> JSONResponse:
-        path = request.url.path
-        method = request.method
-        return JSONResponse(status_code=400, content={"message": f"Error {error} for method {method} and path {path}"})
-    
-    def not_authorized(self,  request: Request, error: str = "Not Authorized") -> JSONResponse:
-        path = request.url.path
-        method = request.method
-        return JSONResponse(status_code=401, content={"message": f"Error {error} for method {method} and path {path}"})
-    
-    def forbidden(self, request: Request, error: str = "Forbidden") -> JSONResponse:
-        path = request.url.path
-        method = request.method
-        return JSONResponse(status_code=403, content={"message": f"Error {error} for method {method} and path {path}"})
+    def __add_exception_handlers(self) -> None:
+        self.__app.add_exception_handler(400, self.bad_request)
+        self.__app.add_exception_handler(401, self.not_authorized)
+        self.__app.add_exception_handler(403, self.forbidden)
+        self.__app.add_exception_handler(404, self.not_found)
+        self.__app.add_exception_handler(405, self.method_not_allowed)
+        self.__app.add_exception_handler(500, self.internal_server_error)
 
-    def not_found(self, request: Request) -> JSONResponse:
-        path = request.url.path
-        return JSONResponse(status_code=404, content={"message": f"Path {path} not found"})
-    
-    def method_not_allowed(self, request: Request) -> JSONResponse:
+    def bad_request(self,  request: Request, exc: HTTPException) -> JSONResponse:
         path = request.url.path
         method = request.method
-        return JSONResponse(status_code=405, content={"message": f"Method {method} not allowed for path {path}"})
+        content = {"detail": f"Bad Request for method {method} and path {path}"}
+        if self.__debug_mode:
+            content["exception"] = exc.detail
+        return JSONResponse(status_code=400, content=content)
     
-    def internal_server_error(self, request: Request, error: str = "Internal Server Error") -> JSONResponse:
+    def not_authorized(self,  request: Request, exc: HTTPException) -> JSONResponse:
         path = request.url.path
         method = request.method
-        return JSONResponse(status_code=500, content={"message": f"Error {error} for method {method} and path {path}"})    
+        content = {"detail": f"Not authorized for method {method} and path {path}"}
+        if self.__debug_mode:
+            content["exception"] = exc.detail
+        return JSONResponse(status_code=401, content=content)
+    
+    def forbidden(self, request: Request, exc: HTTPException) -> JSONResponse:
+        path = request.url.path
+        method = request.method
+        content = {"detail": f"Forbidden for method {method} and path {path}"}
+        if self.__debug_mode:
+            content["exception"] = exc.detail
+        return JSONResponse(status_code=403, content=content)
+
+    def not_found(self, request: Request, exc: HTTPException) -> JSONResponse:
+        path = request.url.path        
+        content = {"detail": f"Path {path} not found"}
+        if self.__debug_mode:
+            content["exception"] = exc.detail
+        return JSONResponse(status_code=404, content=content)
+    
+    def method_not_allowed(self, request: Request, exc: HTTPException) -> JSONResponse:
+        path = request.url.path
+        method = request.method
+        content = {"detail": f"Method {method} not allowed path {path}"}
+        if self.__debug_mode:
+            content["exception"] = exc.detail
+        return JSONResponse(status_code=405, content=content)
+    
+    def internal_server_error(self, request: Request, exc: HTTPException) -> JSONResponse:
+        path = request.url.path
+        method = request.method
+        content = {"detail": f"Internal server error for method {method} and path {path}"}
+        if self.__debug_mode:
+            content["exception"] = exc.detail
+        return JSONResponse(status_code=403, content=content)   
     
     @staticmethod
-    def __get_methods_for_route(route: APIRoute, current_routes) -> List[str]:
+    def __get_methods_for_route(route: APIRoute, current_routes: List[BaseRoute]) -> List[str]:
         methods = set()
         for r in current_routes:
             if isinstance(r, APIRoute) and r.path == route.path:
