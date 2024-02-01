@@ -3,7 +3,7 @@ from typing import List
 from fastapi.responses import JSONResponse
 from ..di import DIContainer
 from ..routing import Registry
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Request, Response
 from fastapi.routing import APIRoute, BaseRoute
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -82,24 +82,35 @@ class APIController:
             methods=["OPTIONS"],
         )
 
-    def not_found(self, path: str) -> JSONResponse:
-        return JSONResponse(status_code=404, content={"message": f"Path {path} not found"})
-    
-    def method_not_allowed(self, path: str, method: str) -> JSONResponse:
-        return JSONResponse(status_code=405, content={"message": f"Method {method} not allowed for path {path}"})
-    
-    def server_error(self, path: str, method: str, error: str) -> JSONResponse:
-        return JSONResponse(status_code=500, content={"message": f"Error {error} for method {method} and path {path}"})
-    
-    def bad_request(self, path: str, method: str, error: str) -> JSONResponse:
+    def bad_request(self,  request: Request, error: str = "Bad Request") -> JSONResponse:
+        path = request.url.path
+        method = request.method
         return JSONResponse(status_code=400, content={"message": f"Error {error} for method {method} and path {path}"})
     
-    def not_authorized(self, path: str, method: str, error: str) -> JSONResponse:
+    def not_authorized(self,  request: Request, error: str = "Not Authorized") -> JSONResponse:
+        path = request.url.path
+        method = request.method
         return JSONResponse(status_code=401, content={"message": f"Error {error} for method {method} and path {path}"})
     
-    def forbidden(self, path: str, method: str, error: str) -> JSONResponse:
+    def forbidden(self, request: Request, error: str = "Forbidden") -> JSONResponse:
+        path = request.url.path
+        method = request.method
         return JSONResponse(status_code=403, content={"message": f"Error {error} for method {method} and path {path}"})
 
+    def not_found(self, request: Request) -> JSONResponse:
+        path = request.url.path
+        return JSONResponse(status_code=404, content={"message": f"Path {path} not found"})
+    
+    def method_not_allowed(self, request: Request) -> JSONResponse:
+        path = request.url.path
+        method = request.method
+        return JSONResponse(status_code=405, content={"message": f"Method {method} not allowed for path {path}"})
+    
+    def internal_server_error(self, request: Request, error: str = "Internal Server Error") -> JSONResponse:
+        path = request.url.path
+        method = request.method
+        return JSONResponse(status_code=500, content={"message": f"Error {error} for method {method} and path {path}"})    
+    
     @staticmethod
     def __get_methods_for_route(route: APIRoute, current_routes) -> List[str]:
         methods = set()
