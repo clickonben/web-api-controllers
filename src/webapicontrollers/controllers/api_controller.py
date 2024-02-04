@@ -137,7 +137,7 @@ class APIController:
         path = request.url.path
         method = request.method
         content = {"detail": f"Internal server error for method {method} and path {path}"}
-        if self.__debug_mode:
+        if self.__debug_mode and hasattr(exc, "detail"):
             content["exception"] = exc.detail
         return JSONResponse(status_code=403, content=content)   
     
