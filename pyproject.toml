@@ -38,10 +38,8 @@ dependencies = [
 Homepage = "https://github.com/codingflowdev/web-api-controllers"
 
 [tool.hatch.build.targets.wheel]
-# Exclude app.py from the wheel distribution
 exclude = ["src/app.py"]
 
 [tool.hatch.build.targets.sdist]
-# Exclude app.py from the source distribution
 exclude = ["src/app.py"]
 
