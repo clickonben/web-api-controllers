@@ -123,6 +123,9 @@ TestController(app)
 If you overide the handler methods such as not_found etc. in more than one cotnroller only one handler will be registered on a last one wins basis.
 Implementing a per route prefix handling system is on the to do list.
 
+If you create a base controller class and then overide it's methods in a derived class the path needs to be the same in both methods. 
+If you don't do this then FastAPI gets confused about which handler maps to which path.
+
 ## Caution
 This project is in a very early state and might not be very useful to anyone yet. There is no support avilable, use at your own risk.
 

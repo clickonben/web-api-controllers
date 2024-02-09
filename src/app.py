@@ -2,13 +2,17 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from src.webapicontrollers import APIController, Get, Post, Patch, Delete, Put, RoutePrefix
 
+import logging
 
+# Basic configuration for logging
+logging.basicConfig(level=logging.INFO, filename='app.log', filemode='a',
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 @RoutePrefix('/test')
 class TestController(APIController):
 
     def __init__(self, app: FastAPI) -> None:
-        super().__init__(app)    
+        super().__init__(app, debug_mode=True, cors_origins=['*'])    
     
     @Get('/')
     async def get(self) -> dict:

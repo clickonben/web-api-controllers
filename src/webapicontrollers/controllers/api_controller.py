@@ -6,6 +6,7 @@ from ..routing import Registry
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.routing import APIRoute, BaseRoute
 from fastapi.middleware.cors import CORSMiddleware
+import logging
 
 
 class APIController:
@@ -94,52 +95,74 @@ class APIController:
         self.__app.add_exception_handler(405, self.method_not_allowed)
         self.__app.add_exception_handler(500, self.internal_server_error)
 
-    def bad_request(self,  request: Request, exc: HTTPException) -> JSONResponse:
-        path = request.url.path
-        method = request.method
-        content = {"detail": f"Bad Request for method {method} and path {path}"}
-        if self.__debug_mode:
-            content["exception"] = exc.detail
-        return JSONResponse(status_code=400, content=content)
-    
-    def not_authorized(self,  request: Request, exc: HTTPException) -> JSONResponse:
-        path = request.url.path
-        method = request.method
-        content = {"detail": f"Not authorized for method {method} and path {path}"}
-        if self.__debug_mode:
-            content["exception"] = exc.detail
-        return JSONResponse(status_code=401, content=content)
-    
+    def bad_request(self, request: Request, exc: HTTPException) -> JSONResponse:
+        return self.__handle_exception(
+            request, 
+            exc, 
+            400, 
+            f"Bad Request for method {request.method} "
+            f"and path {request.url.path}"
+        )
+
+    def not_authorized(self, request: Request, exc: HTTPException) -> JSONResponse:
+        return self.__handle_exception(
+            request, 
+            exc, 
+            401, 
+            f"Not authorized for method {request.method} "
+            f"and path {request.url.path}"
+        )
+
     def forbidden(self, request: Request, exc: HTTPException) -> JSONResponse:
-        path = request.url.path
-        method = request.method
-        content = {"detail": f"Forbidden for method {method} and path {path}"}
-        if self.__debug_mode:
-            content["exception"] = exc.detail
-        return JSONResponse(status_code=403, content=content)
+        return self.__handle_exception(
+            request, 
+            exc, 
+            403, 
+            f"Forbidden for method {request.method} "
+            f"and path {request.url.path}"
+        )
 
     def not_found(self, request: Request, exc: HTTPException) -> JSONResponse:
-        path = request.url.path        
-        content = {"detail": f"Path {path} not found"}
-        if self.__debug_mode:
-            content["exception"] = exc.detail
-        return JSONResponse(status_code=404, content=content)
-    
-    def method_not_allowed(self, request: Request, exc: HTTPException) -> JSONResponse:
-        path = request.url.path
-        method = request.method
-        content = {"detail": f"Method {method} not allowed path {path}"}
-        if self.__debug_mode:
-            content["exception"] = exc.detail
-        return JSONResponse(status_code=405, content=content)
-    
-    def internal_server_error(self, request: Request, exc: HTTPException) -> JSONResponse:
-        path = request.url.path
-        method = request.method
-        content = {"detail": f"Internal server error for method {method} and path {path}"}
+        return self.__handle_exception(
+            request, 
+            exc, 
+            404, 
+            f"Path {request.url.path} not found"
+        )
+
+    def method_not_allowed(self, request: Request, exc: HTTPException) -> JSONResponse:        
+        return self.__handle_exception(
+            request, 
+            exc, 
+            405, 
+            f"Method {request.method} not allowed for path {request.url.path}"
+        )
+
+    def internal_server_error(self, request: Request, exc: HTTPException) -> JSONResponse:          
+        return self.__handle_exception(
+            request,
+            exc,
+            500, 
+            f"Internal server error for method {request.method} "
+            f"and path {request.url.path}"
+        )
+
+
+    def __handle_exception(self, request: Request, exc: HTTPException, status_code: int, error_message: str) -> JSONResponse:
+        self.__log_exception(error_message, exc)
+        content = {"detail": error_message}
         if self.__debug_mode and hasattr(exc, "detail"):
             content["exception"] = exc.detail
-        return JSONResponse(status_code=403, content=content)   
+        return JSONResponse(status_code=status_code, content=content)
+
+    def __log_exception(self, error_message: str, exc: HTTPException) -> None:
+        if hasattr(exc, "detail"):
+                error_message += f"; Exception: {exc.detail}"
+        if logging.getLogger().hasHandlers():
+            logger = logging.getLogger(__name__)            
+            logger.error(error_message)
+        else:
+            print(error_message)
     
     @staticmethod
     def __get_methods_for_route(route: APIRoute, current_routes: List[BaseRoute]) -> List[str]:
@@ -152,3 +175,5 @@ class APIController:
     @staticmethod
     async def __head_handler() -> Response:
         return Response()
+    
+    
