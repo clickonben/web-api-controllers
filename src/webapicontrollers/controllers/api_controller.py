@@ -93,11 +93,11 @@ class APIController:
         self.__app.add_exception_handler(403, self.forbidden)
         self.__app.add_exception_handler(404, self.not_found)
         self.__app.add_exception_handler(405, self.method_not_allowed)
+        self.__app.add_exception_handler(422, self.unprocessable_entity)
         self.__app.add_exception_handler(500, self.internal_server_error)
 
     def bad_request(self, request: Request, exc: HTTPException) -> JSONResponse:
-        return self.__handle_exception(
-            request, 
+        return self.__handle_exception(            
             exc, 
             400, 
             f"Bad Request for method {request.method} "
@@ -105,8 +105,7 @@ class APIController:
         )
 
     def not_authorized(self, request: Request, exc: HTTPException) -> JSONResponse:
-        return self.__handle_exception(
-            request, 
+        return self.__handle_exception(            
             exc, 
             401, 
             f"Not authorized for method {request.method} "
@@ -114,8 +113,7 @@ class APIController:
         )
 
     def forbidden(self, request: Request, exc: HTTPException) -> JSONResponse:
-        return self.__handle_exception(
-            request, 
+        return self.__handle_exception(            
             exc, 
             403, 
             f"Forbidden for method {request.method} "
@@ -123,36 +121,41 @@ class APIController:
         )
 
     def not_found(self, request: Request, exc: HTTPException) -> JSONResponse:
-        return self.__handle_exception(
-            request, 
+        return self.__handle_exception(            
             exc, 
             404, 
             f"Path {request.url.path} not found"
         )
 
     def method_not_allowed(self, request: Request, exc: HTTPException) -> JSONResponse:        
-        return self.__handle_exception(
-            request, 
+        return self.__handle_exception(            
             exc, 
             405, 
             f"Method {request.method} not allowed for path {request.url.path}"
         )
+    
+    def unprocessable_entity(self, request: Request, exc: HTTPException) -> JSONResponse:
+        return self.__handle_exception(            
+            exc, 
+            422, 
+            f"Unprocessable entity for method {request.method} "
+            f"and path {request.url.path}"
+        )
 
     def internal_server_error(self, request: Request, exc: HTTPException) -> JSONResponse:          
-        return self.__handle_exception(
-            request,
+        return self.__handle_exception(            
             exc,
             500, 
             f"Internal server error for method {request.method} "
             f"and path {request.url.path}"
         )
 
-
-    def __handle_exception(self, request: Request, exc: HTTPException, status_code: int, error_message: str) -> JSONResponse:
+    def __handle_exception(self, exc: HTTPException, status_code: int, error_message: str) -> JSONResponse:
         self.__log_exception(error_message, exc)
         content = {"detail": error_message}
-        if self.__debug_mode and hasattr(exc, "detail"):
-            content["exception"] = exc.detail
+        if hasattr(exc, "detail") and ((status_code == 500 and self.__debug_mode) or (status_code != 500)):
+            content["errors"] = exc.detail
+        
         return JSONResponse(status_code=status_code, content=content)
 
     def __log_exception(self, error_message: str, exc: HTTPException) -> None:
