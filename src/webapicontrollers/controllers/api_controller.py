@@ -83,14 +83,24 @@ class APIController:
         
         for path in distinct_paths:
             methods = self.__get_methods_for_path(path, current_routes)
-            # noinspection PyTypeChecker
-            self.__app.add_api_route(
-                path=path,
-                endpoint=self.create_options_endpoint(methods),
-                methods=["OPTIONS"],
-                name=f"{path}_options",
-                response_model=AllowedMethodsResponse
-            )        
+            if not self.__options_route_exists(path):
+                # noinspection PyTypeChecker
+                self.__app.add_api_route(
+                    path=path,
+                    endpoint=self.create_options_endpoint(methods),
+                    methods=["OPTIONS"],
+                    name=f"{path}_options",
+                    response_model=AllowedMethodsResponse
+                )     
+
+    def __options_route_exists(self, path: str) -> bool:
+        """
+        Check if an OPTIONS route already exists for the specified path.
+        """
+        for route in self.__app.routes:
+            if isinstance(route, APIRoute) and route.path == path and "OPTIONS" in route.methods:
+                return True
+        return False   
 
     def __add_exception_handlers(self) -> None:
         self.__app.add_exception_handler(400, self.bad_request)
