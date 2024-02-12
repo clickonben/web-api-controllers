@@ -40,8 +40,9 @@ class APIController:
                 path = self._route_prefix + path
                 
             if hasattr(self, func.__name__) and callable(getattr(self, func.__name__)):
-                bound_method = getattr(self, func.__name__)            
-                self.__add_route(bound_method, method, path)
+                bound_method = getattr(self, func.__name__) 
+                if not self.__route_exists_for_method(path, method):           
+                    self.__add_route(bound_method, method, path)
 
         if self.__generate_options_endpoints:
             self.__add_options_endpoints()
