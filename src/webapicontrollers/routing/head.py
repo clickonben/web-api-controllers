@@ -1,6 +1,6 @@
 from .route import Route
-from ..enums import HTTPMethods
+from ..enums import HTTPMethodType
 
 class Head(Route):
     def __init__(self, path: str):
-        super().__init__(path, HTTPMethods.HEAD)
+        super().__init__(path, HTTPMethodType.HEAD)

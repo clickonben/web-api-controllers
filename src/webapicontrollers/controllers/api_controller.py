@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from ..di import DIContainer
 from ..routing import Registry
 from ..models import AllowedMethodsResponse
+from ..enums import HTTPMethodType
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.routing import APIRoute, BaseRoute
 from fastapi.middleware.cors import CORSMiddleware
@@ -53,7 +54,7 @@ class APIController:
             endpoint=bound_method,
             methods=[method.value]
         )
-        if method.value == 'GET' and self.__generate_head_endpoints:
+        if method.value == 'GET' and self.__generate_head_endpoints and not self.__route_exists_for_method(path, HTTPMethodType.HEAD):
             self.__add_head(path)
 
     def __add_head(self, path: str) -> None:
@@ -83,7 +84,7 @@ class APIController:
         
         for path in distinct_paths:
             methods = self.__get_methods_for_path(path, current_routes)
-            if not self.__options_route_exists(path):
+            if not self.__route_exists_for_method(path, HTTPMethodType.OPTIONS):
                 # noinspection PyTypeChecker
                 self.__app.add_api_route(
                     path=path,
@@ -93,12 +94,12 @@ class APIController:
                     response_model=AllowedMethodsResponse
                 )     
 
-    def __options_route_exists(self, path: str) -> bool:
+    def __route_exists_for_method(self, path: str, method_type: HTTPMethodType) -> bool:
         """
         Check if an OPTIONS route already exists for the specified path.
         """
         for route in self.__app.routes:
-            if isinstance(route, APIRoute) and route.path == path and "OPTIONS" in route.methods:
+            if isinstance(route, APIRoute) and route.path == path and method_type.value in route.methods:
                 return True
         return False   
 

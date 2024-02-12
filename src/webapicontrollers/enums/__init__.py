@@ -1,1 +1,1 @@
-from .http_methods import HTTPMethods
+from .http_methods import HTTPMethodType

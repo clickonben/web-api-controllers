@@ -1,6 +1,6 @@
 from .route import Route
-from ..enums import HTTPMethods
+from ..enums import HTTPMethodType
 
 class Options(Route):
     def __init__(self, path: str):
-        super().__init__(path, HTTPMethods.OPTIONS)
+        super().__init__(path, HTTPMethodType.OPTIONS)

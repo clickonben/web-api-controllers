@@ -1,11 +1,11 @@
 from ..di import DIContainer
-from ..enums import HTTPMethods
+from ..enums import HTTPMethodType
 from typing import Callable
 from ..routing import Registry
 
 
 class Route:
-    def __init__(self, path: str, method: HTTPMethods):
+    def __init__(self, path: str, method: HTTPMethodType):
         self.path = path
         self.method = method
         self.__container = DIContainer(Registry())

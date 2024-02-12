@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class HTTPMethods(Enum):
+class HTTPMethodType(Enum):
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
