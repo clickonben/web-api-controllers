@@ -1,8 +1,9 @@
 from enum import Enum
-from typing import List
+from typing import List, Callable
 from fastapi.responses import JSONResponse
 from ..di import DIContainer
 from ..routing import Registry
+from ..models import AllowedMethodsResponse
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.routing import APIRoute, BaseRoute
 from fastapi.middleware.cors import CORSMiddleware
@@ -59,7 +60,8 @@ class APIController:
         self.__app.add_api_route(
             path=path,
             endpoint=self.__head_handler,
-            methods=['HEAD']
+            methods=['HEAD'],
+            name=f"{path}_head"
         )
 
     def __add_cors(self, cors_origins: List[str]) -> None:
@@ -74,18 +76,21 @@ class APIController:
 
     def __add_options_endpoints(self) -> None:
         current_routes = self.__app.routes.copy()
+        distinct_paths = set()
         for route in current_routes:
             if isinstance(route, APIRoute):
-                self.__add_options_route(route, current_routes)
-
-    def __add_options_route(self, route: APIRoute, current_routes: List[BaseRoute]) -> None:
-        methods = self.__get_methods_for_route(route, current_routes)
-        # noinspection PyTypeChecker
-        self.__app.add_api_route(
-            path=route.path,
-            endpoint=lambda: {"allowed_methods": methods},
-            methods=["OPTIONS"],
-        )
+                distinct_paths.add(route.path)
+        
+        for path in distinct_paths:
+            methods = self.__get_methods_for_path(path, current_routes)
+            # noinspection PyTypeChecker
+            self.__app.add_api_route(
+                path=path,
+                endpoint=self.create_options_endpoint(methods),
+                methods=["OPTIONS"],
+                name=f"{path}_options",
+                response_model=AllowedMethodsResponse
+            )        
 
     def __add_exception_handlers(self) -> None:
         self.__app.add_exception_handler(400, self.bad_request)
@@ -168,15 +173,21 @@ class APIController:
             print(error_message)
     
     @staticmethod
-    def __get_methods_for_route(route: APIRoute, current_routes: List[BaseRoute]) -> List[str]:
+    def __get_methods_for_path(path: str, current_routes: List[BaseRoute]) -> List[str]:
         methods = set()
         for r in current_routes:
-            if isinstance(r, APIRoute) and r.path == route.path:
+            if isinstance(r, APIRoute) and r.path == path:
                 methods.update(r.methods)
         return list(methods)
 
     @staticmethod
     async def __head_handler() -> Response:
         return Response()
+    
+    @staticmethod
+    def create_options_endpoint(methods: list[str]):
+        def options_endpoint():
+            return AllowedMethodsResponse(allowed_methods=methods)
+        return options_endpoint
     
     
