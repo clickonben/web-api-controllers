@@ -1,4 +1,4 @@
-from enum import Enum
+import inspect
 from typing import List, Callable
 from fastapi.responses import JSONResponse
 from ..di import DIContainer
@@ -49,20 +49,28 @@ class APIController:
 
         self.__add_exception_handlers()
 
-    def __add_route(self, bound_method: callable, method: Enum, path: str) -> None:
+    def __add_route(self, bound_method: callable, method: HTTPMethodType, path: str) -> None:
         self.__app.add_api_route(
             path=path,
             endpoint=bound_method,
             methods=[method.value]
         )
         if method.value == 'GET' and self.__generate_head_endpoints and not self.__route_exists_for_method(path, HTTPMethodType.HEAD):
-            self.__add_head(path)
+            self.__add_head(path, bound_method)
 
-    def __add_head(self, path: str) -> None:
+    def __add_head(self, path: str, get_method: Callable) -> None:
+        async def head_wrapper(*args, **kwargs) -> Response:            
+            ret_val = await get_method(*args, **kwargs)
+            response = ret_val if isinstance(ret_val, Response) else JSONResponse(content=ret_val)            
+            return Response(content=None, headers=dict(response.headers), status_code=response.status_code)
+        
+        sig = inspect.signature(get_method)
+        head_wrapper.__signature__ = sig
+
         self.__app.add_api_route(
             path=path,
-            endpoint=self.__head_handler,
-            methods=['HEAD'],
+            endpoint=head_wrapper,
+            methods=[HTTPMethodType.HEAD.value],
             name=f"{path}_head"
         )
 
@@ -90,7 +98,7 @@ class APIController:
                 self.__app.add_api_route(
                     path=path,
                     endpoint=self.create_options_endpoint(methods),
-                    methods=["OPTIONS"],
+                    methods=[HTTPMethodType.OPTIONS.value],
                     name=f"{path}_options",
                     response_model=AllowedMethodsResponse
                 )     

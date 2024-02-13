@@ -6,7 +6,7 @@ class HTTPMethodType(Enum):
     POST = "POST"
     PUT = "PUT"
     DELETE = "DELETE"
-    PATCH = "PATCH",
-    HEAD = "HEAD",
+    PATCH = "PATCH"
+    HEAD = "HEAD"
     OPTIONS = "OPTIONS"
 

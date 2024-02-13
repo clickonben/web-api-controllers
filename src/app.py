@@ -19,29 +19,29 @@ class TestController(APIController):
         return {"method": "GET", "path": "/"}    
         
     
-    @Get('/400')
-    async def get_bad_request(self) -> dict:
-        raise HTTPException(status_code=400, detail="Bad Request")
+    # @Get('/400')
+    # async def get_bad_request(self) -> dict:
+    #     raise HTTPException(status_code=400, detail="Bad Request")
     
-    @Get('/401')
-    async def get_not_authorized(self) -> dict:
-        raise HTTPException(status_code=401, detail="Not Authorized")
+    # @Get('/401')
+    # async def get_not_authorized(self) -> dict:
+    #     raise HTTPException(status_code=401, detail="Not Authorized")
     
-    @Get('/403')
-    async def get_forbidden(self) -> dict:
-        raise HTTPException(status_code=403, detail="Forbidden")
+    # @Get('/403')
+    # async def get_forbidden(self) -> dict:
+    #     raise HTTPException(status_code=403, detail="Forbidden")
     
-    @Get('/404')
-    async def get_not_found(self) -> dict:
-        raise HTTPException(status_code=404, detail="Not Found")
+    # @Get('/404')
+    # async def get_not_found(self) -> dict:
+    #     raise HTTPException(status_code=404, detail="Not Found")
     
-    @Get('/405')
-    async def get_method_not_allowed(self) -> dict:
-        raise HTTPException(status_code=405, detail="Method Not Allowed")
+    # @Get('/405')
+    # async def get_method_not_allowed(self) -> dict:
+    #     raise HTTPException(status_code=405, detail="Method Not Allowed")
     
-    @Get('/500')
-    async def get_internal_server_error(self) -> dict:
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+    # @Get('/500')
+    # async def get_internal_server_error(self) -> dict:
+    #     raise HTTPException(status_code=500, detail="Internal Server Error")
     
     @Get('/{arg}')
     async def get_with_arg(self, arg) -> dict:
