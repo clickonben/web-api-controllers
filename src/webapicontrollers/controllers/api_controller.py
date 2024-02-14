@@ -1,4 +1,6 @@
 import inspect
+import json
+from pydantic import BaseModel
 from typing import List, Callable
 from fastapi.responses import JSONResponse
 from ..di import DIContainer
@@ -58,13 +60,18 @@ class APIController:
         if method.value == 'GET' and self.__generate_head_endpoints and not self.__route_exists_for_method(path, HTTPMethodType.HEAD):
             self.__add_head(path, bound_method)
 
-    def __add_head(self, path: str, get_method: Callable) -> None:
+    def __add_head(self, path: str, get_method: Callable) -> None:        
         async def head_wrapper(*args, **kwargs) -> Response:            
             ret_val = await get_method(*args, **kwargs)
-            response = ret_val if isinstance(ret_val, Response) else JSONResponse(content=ret_val)            
-            return Response(content=None, headers=dict(response.headers), status_code=response.status_code)
+            content = self.__get_content(ret_val) 
+            if isinstance(ret_val, list):
+                response = JSONResponse(content=content)
+            else:
+                response = Response(content=content, media_type="application/json") 
+            return Response(content=None, headers=dict(response.headers) )
         
         sig = inspect.signature(get_method)
+        sig._return_annotation = None
         head_wrapper.__signature__ = sig
 
         self.__app.add_api_route(
@@ -73,6 +80,17 @@ class APIController:
             methods=[HTTPMethodType.HEAD.value],
             name=f"{path}_head"
         )
+
+    def __get_content(self, value):
+        if isinstance(value, list): 
+                return [self.__get_content(item) for item in value]                
+        if isinstance(value, BaseModel):
+            return value.model_dump_json()
+        else:
+            try:
+                return json.dumps(value)
+            except TypeError:
+                return str(value)
 
     def __add_cors(self, cors_origins: List[str]) -> None:
         # noinspection PyTypeChecker
@@ -209,5 +227,8 @@ class APIController:
         def options_endpoint():
             return AllowedMethodsResponse(allowed_methods=methods)
         return options_endpoint
+    
+    
+    
     
     
