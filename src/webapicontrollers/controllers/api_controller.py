@@ -217,18 +217,9 @@ class APIController:
             if isinstance(r, APIRoute) and r.path == path:
                 methods.update(r.methods)
         return list(methods)
-
-    @staticmethod
-    async def __head_handler() -> Response:
-        return Response()
     
     @staticmethod
     def create_options_endpoint(methods: list[str]):
         def options_endpoint():
             return AllowedMethodsResponse(allowed_methods=methods)
         return options_endpoint
-    
-    
-    
-    
-    
