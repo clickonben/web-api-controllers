@@ -4,7 +4,6 @@ from typing import List
 from fastapi.responses import JSONResponse
 from ..di import DIContainer
 from ..routing import Registry
-from ..models import AllowedMethodsResponse
 from ..enums import HTTPMethodType
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.routing import APIRoute, BaseRoute
