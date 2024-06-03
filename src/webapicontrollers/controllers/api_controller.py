@@ -1,7 +1,6 @@
-import inspect
 import json
 from pydantic import BaseModel
-from typing import List, Callable
+from typing import List
 from fastapi.responses import JSONResponse
 from ..di import DIContainer
 from ..routing import Registry
@@ -37,49 +36,36 @@ class APIController:
         registry = container.get(Registry)
         self.__routes = registry.get_routes()
 
-        for func, path, method in self.__routes:
+        for func, path, method, name, description in self.__routes:
             if hasattr(self,'_route_prefix'):
                 path = self._route_prefix + path
                 
             if hasattr(self, func.__name__) and callable(getattr(self, func.__name__)):
                 bound_method = getattr(self, func.__name__) 
                 if not self.__route_exists_for_method(path, method):           
-                    self.__add_route(bound_method, method, path)
+                    self.__add_route(bound_method, method, path, name, description)
 
         if self.__generate_options_endpoints:
             self.__add_options_endpoints()
 
         self.__add_exception_handlers()
 
-    def __add_route(self, bound_method: callable, method: HTTPMethodType, path: str) -> None:
+    def __add_route(self, bound_method: callable, method: HTTPMethodType, path: str, name: str = None, description: str = None) -> None:
         self.__app.add_api_route(
             path=path,
             endpoint=bound_method,
-            methods=[method.value]
+            methods=[method.value],
+            name=name,
+            description=description
         )
         if method.value == 'GET' and self.__generate_head_endpoints and not self.__route_exists_for_method(path, HTTPMethodType.HEAD):
-            self.__add_head(path, bound_method)
-
-    def __add_head(self, path: str, get_method: Callable) -> None:        
-        async def head_wrapper(*args, **kwargs) -> Response:            
-            ret_val = await get_method(*args, **kwargs)
-            content = self.__get_content(ret_val) 
-            if isinstance(ret_val, list):
-                response = JSONResponse(content=content)
-            else:
-                response = Response(content=content, media_type="application/json") 
-            return Response(content=None, headers=dict(response.headers) )
-        
-        sig = inspect.signature(get_method)
-        sig._return_annotation = None
-        head_wrapper.__signature__ = sig
-
-        self.__app.add_api_route(
+            self.__app.add_api_route(
             path=path,
-            endpoint=head_wrapper,
+            endpoint=bound_method,
             methods=[HTTPMethodType.HEAD.value],
             name=f"{path}_head"
         )
+    
 
     def __get_content(self, value):
         if isinstance(value, list): 
@@ -118,8 +104,25 @@ class APIController:
                     endpoint=self.create_options_endpoint(methods),
                     methods=[HTTPMethodType.OPTIONS.value],
                     name=f"{path}_options",
-                    response_model=AllowedMethodsResponse
-                )     
+                    status_code=204,
+                    response_class=Response,  
+                    include_in_schema=True,  
+                    responses={
+                        204: {
+                            "description": "No Content",  
+                            "content": {},  
+                            "headers": {
+                                "Allow": {
+                                    "description": "Allowed HTTP methods",
+                                    "schema": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                )
+                    
 
     def __route_exists_for_method(self, path: str, method_type: HTTPMethodType) -> bool:
         """
@@ -221,5 +224,5 @@ class APIController:
     @staticmethod
     def create_options_endpoint(methods: list[str]):
         def options_endpoint():
-            return AllowedMethodsResponse(allowed_methods=methods)
+            return Response(headers={"Allow": ", ".join(methods)}, status_code=204)
         return options_endpoint

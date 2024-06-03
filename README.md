@@ -15,7 +15,7 @@ pip install webapicontrollers
 ```python
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-from src.webapicontrollers import APIController, Get, Post, Patch, Delete, Put, RoutePrefix
+from webapicontrollers import APIController, Get, Post, Patch, Delete, Put, RoutePrefix
 
 
 
@@ -23,11 +23,11 @@ from src.webapicontrollers import APIController, Get, Post, Patch, Delete, Put, 
 class TestController(APIController):
 
     def __init__(self, app: FastAPI) -> None:
-        super().__init__(app)    
+        super().__init__(app, cors_origins=['*'])    
     
-    @Get('/')
+    @Get('/', name='Optional name for OpenAPI docs', description='Optional description for OpenAPI docs')
     async def get(self) -> dict:
-        return {"method": "GET", "path": "/"}            
+        return {"method": "GET", "path": "/"}  
     
     @Get('/400')
     async def get_bad_request(self) -> dict:
